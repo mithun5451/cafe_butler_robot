@@ -17,15 +17,29 @@ def generate_launch_description():
     # Include the robot_state_publisher launch file, provided by our own package. Force sim time to be enabled
     # !!! MAKE SURE YOU SET THE PACKAGE NAME CORRECTLY !!!
 
-    package_name='articubot_one' #<--- CHANGE ME
+    package_name='cafe_butler_robot' #<--- CHANGE ME
 
     rsp = IncludeLaunchDescription(
                 PythonLaunchDescriptionSource([os.path.join(
-                    get_package_share_directory(package_name),'/home/mithun/robo_ws/src/articubot_one/launch/launch_sim.launch.py'
+                    get_package_share_directory(package_name),'/home/mithun/dheek_ws/src/cafe_butler_robot/launch/rsp.launch.py'
                 )]), launch_arguments={'use_sim_time': 'true', 'use_ros2_control': 'true'}.items()
     )
 
-    gazebo_params_file = os.path.join(get_package_share_directory(package_name),'/home/mithun/robo_ws/src/articubot_one/config/my_controllers.yaml')
+    joystick = IncludeLaunchDescription(
+                PythonLaunchDescriptionSource([os.path.join(
+                    get_package_share_directory(package_name),'/home/mithun/dheek_ws/src/cafe_butler_robot/launch/joystick.launch.py'
+                )]), launch_arguments={'use_sim_time': 'true'}.items()
+    )
+
+    twist_mux_params = os.path.join(get_package_share_directory(package_name),'/home/mithun/dheek_ws/src/cafe_butler_robot/config/twist_mux.yaml')
+    twist_mux = Node(
+            package="twist_mux",
+            executable="twist_mux",
+            parameters=[twist_mux_params, {'use_sim_time': True}],
+            remappings=[('/cmd_vel_out','/diff_cont/cmd_vel_unstamped')]
+        )
+
+    gazebo_params_file = os.path.join(get_package_share_directory(package_name),'/home/mithun/dheek_ws/src/cafe_butler_robot/config/gazebo_params.yaml')
 
     # Include the Gazebo launch file, provided by the gazebo_ros package
     gazebo = IncludeLaunchDescription(
@@ -75,6 +89,8 @@ def generate_launch_description():
     # Launch them all!
     return LaunchDescription([
         rsp,
+        joystick,
+        twist_mux,
         gazebo,
         spawn_entity,
         diff_drive_spawner,
